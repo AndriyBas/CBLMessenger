@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style
+        name="AppTheme"
+        parent="android:Theme.Holo.Light">
+        <!-- Customize your theme here. -->
+    </style>
+
+    <style
+        name="AppTheme.NoActionBar"
+        parent="AppTheme"
+        >
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
+</resources>

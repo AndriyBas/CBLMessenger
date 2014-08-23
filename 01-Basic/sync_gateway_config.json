@@ -1,0 +1,59 @@
+{
+  "interface":":4984",
+  "adminInterface":":4985",
+  "log": ["CRUD", "REST+", "Access"],
+  "facebook": {"register": true},
+  "databases": {
+      "db_cbl_messenger": {
+          "server":"http://localhost:8091",
+          "bucket":"db_cbl_messenger",
+          "users": {
+              "GUEST": {"disabled": true}
+          },
+          "sync": `
+              function(doc, oldDoc) {
+
+    // NOTE this function is the same across the iOS, Android, and PhoneGap versions. }
+    if(doc.type == "message") {
+      // all messages are directed to its chat-room channel, so field "chat_room_id" is required
+      if(!doc.chat_room_id) {
+        throw({forbidden : "Messages must have chat_room_id"});
+      }
+      channel("chat_room-" + doc.chat_room_id);
+    } else if(doc.type == "chat_room") {
+      var ch_name = "chat_room-" + doc._id;
+      channel(ch_name);
+      if(!doc.owner_id) {
+        throw({forbidden : "chat_room must have owner_id"});
+      }
+      // security check
+      if(oldDoc) {
+        requireUser(oldDoc.owner_id);
+      }
+      // TODO : add logic to compare oldDoc.owner_id && doc.owner_id
+      // grant all members access to chat room
+      if(Array.isArray(doc.members)) {
+        access(doc.members, ch_name);
+      }
+
+    } else if(doc.type == "user") {
+      // users id is in form [user:user_email]
+      var user = doc._id.substring(doc._id.indexOf(":") + 1)
+
+      if(user != doc.user_id) {
+        throw({forbidden : "user_id (" + doc.user_id + ")  must match docid (" + user + ")"})
+      }
+
+      var ch = []
+      ch.push("users"); // public channel for general use
+      ch.push("user-" + doc.user_id) // private channel of user
+      channel(ch)
+      // TODO : add logic with oldDoc.user_id
+      requireUser(user); // security check
+      access(user, ch); // grant user access to channels
+    }
+
+              }`
+      }
+  }
+}
